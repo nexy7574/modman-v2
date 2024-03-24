@@ -10,7 +10,7 @@ import logging
 
 import rich
 from rich.progress import Progress
-from models.modrinth import *
+from .models.modrinth import *
 
 
 try:
@@ -20,6 +20,8 @@ except importlib.metadata.PackageNotFoundError:
 
 
 class ModrinthAPI:
+    USER_AGENT = f"modman/{_version} (https://github.com/nexy7574/modman-v2)"
+
     def __init__(
             self,
             client: httpx.Client = None,
@@ -29,7 +31,7 @@ class ModrinthAPI:
         self.log = logging.getLogger("modman.api.modrinth")
         if not client:
             self.http = httpx.Client(
-                headers={"User-Agent": f"modman/{_version} (https://github.com/nexy7574/modman-v2)"},
+                headers={"User-Agent": self.USER_AGENT},
                 follow_redirects=True,
                 max_redirects=5,
                 base_url=base_url,
@@ -204,7 +206,7 @@ class ModrinthAPI:
         if featured is not None:
             query["featured"] = json.dumps(featured)
 
-        response = self._get(f"/project/{project}/versions", params=query)
+        response = self._get(f"/project/{project}/version", params=query)
         for version in response:
             try:
                 parsed = Version(**version)

@@ -1,7 +1,7 @@
 import datetime
 import enum
 import typing
-from pydantic import BaseModel, Field, AnyUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 
 __all__ = (
@@ -76,19 +76,25 @@ VERSION_REQUESTED_STATUS = typing.Literal[
 
 class DonationObject(BaseModel):
     """Represents a donation URL for a project."""
-    url: AnyUrl = Field(description="The URL to the donation page")
+    url: HttpUrl = Field(description="The URL to the donation page")
     platform: str = Field(description="The platform that the donation page is on")
     id: str = Field(description="The ID of the donation platform")
+    
+    def __hash__(self):
+        return hash((self.id, self.url))
 
 
 class LicenseObject(BaseModel):
     """Represents a license for a project."""
     name: str = Field(description="The name of the license")
-    url: AnyUrl | None = Field(
+    url: HttpUrl | None = Field(
         None,
         description="The URL to the license text or information"
     )
     id: str = Field(description="The SPDX license ID of a project")
+    
+    def __hash__(self):
+        return hash((self.id, self.url))
 
 
 class Project(BaseModel):
@@ -114,19 +120,19 @@ class Project(BaseModel):
         [],
         description="A list of non-primary additional categories"
     )
-    issues_url: AnyUrl | None = Field(
+    issues_url: HttpUrl | None = Field(
         None,
         description="The URL to the issue tracker of the project"
     )
-    source_url: AnyUrl | None = Field(
+    source_url: HttpUrl | None = Field(
         None,
         description="The URL to the source code of the project"
     )
-    wiki_url: AnyUrl | None = Field(
+    wiki_url: HttpUrl | None = Field(
         None,
         description="The URL to the wiki or documentation of the project"
     )
-    discord_url: AnyUrl | None = Field(
+    discord_url: HttpUrl | None = Field(
         None,
         description="The URL to the Discord server of the project"
     )
@@ -136,7 +142,7 @@ class Project(BaseModel):
     )
     project_type: PROJECT_TYPE = Field(description="The type of project")
     downloads: int = Field(description="The number of downloads the project has")
-    icon_url: AnyUrl | None = Field(None, description="The URL to the icon of the project")
+    icon_url: HttpUrl | None = Field(None, description="The URL to the icon of the project")
     color: int | None = Field(None, description="The RGB color of the project")
     thread_id: str | None = Field(
         None,
@@ -162,6 +168,9 @@ class Project(BaseModel):
     license: LicenseObject = Field(description="The license of the project")
     versions: list[str] = Field(description="A list of the version IDs of the project")
     game_versions: list[str] = Field(description="A list of the game versions the project supports")
+    
+    def __hash__(self):
+        return hash((self.id, self.slug, self.title))
 
     def related(self, target: str) -> bool:
         """Checks that <identifier> relates to this project"""
@@ -180,6 +189,9 @@ class ProjectSearchResultPage(BaseModel):
     offset: int = Field(description="The number of results that were skipped by the query")
     limit: int = Field(description="The number of results that were returned by the query")
     total_hits: int = Field(description="The total number of results that match the query")
+    
+    def __hash__(self):
+        return hash((self.offset, self.total_hits, self.limit))
 
 
 class VersionDependency(BaseModel):
@@ -191,20 +203,29 @@ class VersionDependency(BaseModel):
         description="The file name of the dependency, mostly used for showing external dependencies on modpacks"
     )
     dependency_type: DEPENDENCY_TYPE = Field(description="The type of dependency")
+    
+    def __hash__(self):
+        return hash((self.version_id, self.project_id))
 
 
 class VersionFileHashes(BaseModel):
     """Represents the hashes of a version file."""
     sha1: str | None = Field(None, description="The SHA1 hash of the file")
-    sha256: str | None = Field(None, description="The SHA256 hash of the file")
+    sha512: str | None = Field(None, description="The SHA512 hash of the file")
+    
+    def __hash__(self):
+        return hash((self.sha1, self.sha512))
 
 
 class VersionFile(BaseModel):
     hashes: VersionFileHashes = Field(description="The hashes of the file")
-    url: AnyUrl = Field(description="The URL to the file")
+    url: HttpUrl = Field(description="The URL to the file")
     filename: str = Field(description="The name of the file")
     primary: bool = Field(description="Whether the file is the primary file of the version")
     size: int = Field(description="The size of the file in bytes")
+
+    def __hash__(self):
+        return hash((self.hashes.sha512, self.url, self.filename, self.size))
 
 
 class Version(BaseModel):
@@ -228,6 +249,9 @@ class Version(BaseModel):
     date_published: datetime.datetime
     downloads: int
     files: list[VersionFile] = Field(description="The files of the version")
+
+    def __hash__(self):
+        return hash((self.id, self.project_id, self.version_number, self.date_published))
 
 
 class AllProjectDependencies(BaseModel):
