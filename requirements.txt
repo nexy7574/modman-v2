@@ -1,0 +1,6 @@
+click~=8.1
+rich~=13.7
+httpx~=0.27
+click-aliases~=1.0
+appdirs~=1.4
+pydantic~=2.6
